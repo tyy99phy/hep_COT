@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>hep_COT — Overview & Autoloop</title>
+<style>
+:root {
+  --ink: #1a2634;
+  --ink-soft: #4b5a6e;
+  --ink-dim: #7a8899;
+  --paper: #fafbfc;
+  --card: #ffffff;
+  --line: #dfe3ea;
+  --shade: #f1f4f8;
+
+  --blue: #2b6cb0;
+  --blue-soft: #e8f0f9;
+  --green: #2f855a;
+  --green-soft: #e6f2ec;
+  --orange: #c05621;
+  --orange-soft: #fbeade;
+  --purple: #6b46c1;
+  --purple-soft: #ede7f7;
+  --rose: #b83270;
+  --rose-soft: #f8e3ec;
+  --gold: #b7791f;
+  --gold-soft: #fbf0d9;
+
+  --mono: "SF Mono", "Menlo", "Consolas", "Cascadia Mono", "Liberation Mono", monospace;
+  --sans: -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", "Source Han Sans SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 9.5pt;
+  line-height: 1.4;
+}
+
+@page {
+  size: A3 landscape;
+  margin: 8mm;
+}
+
+.page {
+  width: 100%;
+  padding: 3mm 8mm;
+  page-break-after: always;
+}
+.page:last-child { page-break-after: auto; }
+
+/* ============ Hero ============ */
+.hero {
+  padding: 5mm 10mm;
+  background: linear-gradient(135deg, #0f2440 0%, #1e3a5f 55%, #2b5182 100%);
+  color: #fff;
+  border-radius: 10px;
+  margin-bottom: 4mm;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+}
+.hero h1 {
+  margin: 0 0 4px 0;
+  font-size: 22pt;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  position: relative;
+}
+.hero .tagline {
+  font-size: 11pt;
+  opacity: 0.94;
+  margin-bottom: 6px;
+  position: relative;
+}
+.hero .example-strip {
+  display: inline-block;
+  padding: 3px 12px;
+  background: rgba(255,255,255,0.14);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 9pt;
+  position: relative;
+}
+.hero .example-strip b { color: #ffd98a; }
+
+.hero.purple { background: linear-gradient(135deg, #3d1f5e 0%, #5b3088 55%, #7a45b0 100%); }
+.hero.gold { background: linear-gradient(135deg, #3a2810 0%, #7a5320 55%, #a97a2e 100%); }
+
+/* ============ Section heading ============ */
+h2.section {
+  font-size: 13pt;
+  margin: 3mm 0 2mm 0;
+  padding-left: 8px;
+  border-left: 4px solid var(--blue);
+  color: var(--ink);
+}
+h2.section small {
+  font-size: 10pt;
+  color: var(--ink-soft);
+  font-weight: 400;
+  margin-left: 10px;
+}
+
+/* ============ Flow (top of page 1) ============ */
+.flow {
+  display: grid;
+  grid-template-columns: 1fr auto 2.2fr auto 1.2fr;
+  gap: 5mm;
+  align-items: center;
+  margin-bottom: 3mm;
+}
+.flow .pill {
+  padding: 4mm 5mm;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  text-align: center;
+}
+.flow .pill .label {
+  font-size: 8.5pt;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.flow .pill .title {
+  font-size: 12pt;
+  font-weight: 600;
+  margin: 3px 0;
+}
+.flow .pill .note {
+  font-size: 9pt;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+.flow .pill.input { background: #f6f9fc; border-color: #cfd8e3; }
+.flow .pill.process { background: var(--blue-soft); border-color: #b5cce0; }
+.flow .pill.output { background: var(--green-soft); border-color: #bdd8c8; }
+.flow .arrow {
+  font-size: 20pt;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* ============ Phase grid ============ */
+.phase-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3mm;
+  margin-bottom: 3mm;
+}
+.phase-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--blue);
+  border-radius: 8px;
+  padding: 3mm 4mm;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.phase-card .idx {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 8.5pt;
+  color: var(--blue);
+  background: var(--blue-soft);
+  padding: 1px 7px;
+  border-radius: 4px;
+  margin-right: 6px;
+}
+.phase-card h3 {
+  display: inline;
+  font-size: 11pt;
+  font-weight: 600;
+  margin: 0;
+}
+.phase-card .q {
+  color: var(--ink-soft);
+  font-size: 8.5pt;
+  font-style: italic;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+.phase-card .example {
+  font-size: 8.5pt;
+  color: var(--ink);
+  background: var(--shade);
+  border-radius: 5px;
+  padding: 4px 7px;
+  line-height: 1.4;
+}
+.phase-card .example b { color: var(--blue); }
+
+/* ============ Insight banners ============ */
+.insight-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm;
+}
+.insight {
+  padding: 3mm 5mm;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--rose);
+}
+.insight.ai { border-top-color: var(--purple); }
+.insight h3 {
+  margin: 0 0 4px 0;
+  font-size: 12pt;
+  color: var(--rose);
+}
+.insight.ai h3 { color: var(--purple); }
+.insight .lead {
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 3px;
+  font-size: 10pt;
+}
+.insight ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 9pt;
+}
+.insight ul li { margin-bottom: 2px; line-height: 1.4; }
+
+/* ============ Page 2: three-way ============ */
+.three-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4mm;
+  margin-bottom: 3mm;
+}
+.strand {
+  padding: 3mm 5mm;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--blue);
+}
+.strand.teacher { border-top-color: var(--blue); }
+.strand.native  { border-top-color: var(--green); }
+.strand.aligned { border-top-color: var(--orange); }
+.strand .role {
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+}
+.strand h3 {
+  margin: 2px 0 3px 0;
+  font-size: 13pt;
+}
+.strand .model {
+  font-family: var(--mono);
+  font-size: 9pt;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+.strand .purpose {
+  font-size: 9.5pt;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.strand.teacher h3 { color: var(--blue); }
+.strand.native  h3 { color: var(--green); }
+.strand.aligned h3 { color: var(--orange); }
+
+/* ============ Feedback signal block ============ */
+.signal-block {
+  padding: 4mm 6mm;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f5f0fb 0%, #ede7f7 100%);
+  border: 1px solid #d4c6ee;
+  margin-bottom: 3mm;
+}
+.signal-block h3 {
+  margin: 0 0 4px 0;
+  font-size: 13pt;
+  color: var(--purple);
+}
+.signal-block .subtitle {
+  font-size: 9.5pt;
+  color: var(--ink);
+  margin-bottom: 3mm;
+}
+.signal-three {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3mm;
+}
+.signal-three .rule {
+  background: #fff;
+  border-radius: 8px;
+  padding: 3mm 4mm;
+  border-left: 4px solid var(--purple);
+}
+.signal-three .rule .tag {
+  font-family: var(--mono);
+  font-size: 8.5pt;
+  color: var(--purple);
+  background: var(--purple-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.signal-three .rule .name {
+  font-size: 11pt;
+  font-weight: 600;
+  margin: 3px 0;
+}
+.signal-three .rule .desc {
+  font-size: 9pt;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.signal-three .rule .thresh {
+  margin-top: 3px;
+  font-family: var(--mono);
+  font-size: 8.5pt;
+  color: var(--purple);
+}
+
+/* ============ Example blocks (diff / feedback) ============ */
+.example-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm;
+  margin-top: 3mm;
+}
+.example-block .col {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3mm 4mm;
+}
+.example-block h4 {
+  margin: 0 0 3px 0;
+  font-size: 10.5pt;
+  color: var(--ink);
+}
+.example-block h4 .mini {
+  font-size: 8.5pt;
+  color: var(--ink-soft);
+  font-weight: 400;
+  margin-left: 6px;
+}
+.example-block .diff {
+  font-family: var(--mono);
+  font-size: 8.5pt;
+  background: var(--shade);
+  padding: 3mm;
+  border-radius: 6px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.example-block .diff .miss { color: var(--rose); font-weight: 600; }
+.example-block .diff .good { color: var(--green); font-weight: 600; }
+.example-block .diff .key  { color: var(--blue); font-weight: 600; }
+
+.fb-template {
+  font-family: var(--mono);
+  font-size: 8.5pt;
+  background: #fffbf3;
+  border-left: 3px solid var(--orange);
+  padding: 3mm;
+  border-radius: 6px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  color: #333;
+}
+.fb-template .lbl { color: var(--orange); font-weight: 600; }
+.fb-template b { color: var(--rose); font-weight: 600; }
+
+/* ============ Page 3: diverging delta chart ============ */
+.delta-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 3mm 6mm 2mm 6mm;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  margin-bottom: 2mm;
+}
+.delta-card h3 {
+  margin: 0 0 1mm 0;
+  font-size: 11.5pt;
+  color: var(--ink);
+}
+.delta-card .sub {
+  font-size: 8.5pt;
+  color: var(--ink-soft);
+  margin-bottom: 2mm;
+}
+
+.delta-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 8.5pt;
+  color: var(--ink-soft);
+  margin-bottom: 2mm;
+  align-items: center;
+}
+.delta-legend .sw {
+  display: inline-block;
+  width: 14px; height: 8px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.delta-legend .sw.n { background: #2f855a; }
+.delta-legend .sw.c { background: #2b6cb0; }
+.delta-legend .sw.dn { background: #b83270; }
+
+.delta-grid {
+  display: grid;
+  grid-template-columns: 90px 1fr 1fr;
+  column-gap: 4mm;
+  row-gap: 1.3mm;
+  align-items: center;
+  font-size: 9pt;
+}
+.delta-grid .col-head {
+  font-size: 8.5pt;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding-bottom: 1mm;
+  border-bottom: 1px solid var(--line);
+}
+.delta-grid .phase-label {
+  font-weight: 600;
+  color: var(--ink);
+  padding-right: 6px;
+}
+.delta-grid .phase-label small {
+  display: block;
+  font-weight: 400;
+  color: var(--ink-soft);
+  font-size: 8pt;
+}
+
+/* diverging bar: center axis at 50%, positive grows right, negative grows left */
+.dbar-wrap {
+  position: relative;
+  height: 15px;
+  background: #f1f4f8;
+  border-radius: 3px;
+}
+.dbar-wrap::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px;
+  background: #b9c3ce;
+}
+.dbar-wrap .bar {
+  position: absolute;
+  top: 2px; bottom: 2px;
+  border-radius: 2px;
+}
+.dbar-wrap .bar.pos {
+  left: 50%;
+  background: linear-gradient(90deg, #2f855a 0%, #48bb78 100%);
+}
+.dbar-wrap .bar.pos.cite {
+  background: linear-gradient(90deg, #2b6cb0 0%, #4299e1 100%);
+}
+.dbar-wrap .bar.neg {
+  right: 50%;
+  background: linear-gradient(270deg, #b83270 0%, #d53f8c 100%);
+}
+.dbar-wrap .label {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 8.5pt;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.dbar-wrap .label.right { left: 50%; margin-left: 4px; color: var(--ink); }
+.dbar-wrap .label.left  { right: 50%; margin-right: 4px; color: var(--ink); }
+.dbar-wrap .base-n {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  left: 4px;
+  font-family: var(--mono);
+  font-size: 7.5pt;
+  color: var(--ink-dim);
+}
+
+/* ============ Before/after answer diff ============ */
+.rebut-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 3mm 4mm 3mm 4mm;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  margin-bottom: 2mm;
+}
+.rebut-card > h3 {
+  margin: 0 0 1mm 0;
+  font-size: 11.5pt;
+  color: var(--ink);
+}
+.rebut-card > .sub {
+  font-size: 8.5pt;
+  color: var(--ink-soft);
+  margin-bottom: 2mm;
+}
+.rebut-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 3mm;
+  align-items: stretch;
+}
+.rebut-col {
+  border-radius: 7px;
+  padding: 2.5mm 3.5mm;
+  font-size: 8pt;
+  line-height: 1.4;
+  border: 1px solid var(--line);
+}
+.rebut-col.feedback {
+  background: #fffbf3;
+  border-left: 3px solid var(--orange);
+}
+.rebut-col.before {
+  background: #fdf4f7;
+  border-left: 3px solid var(--rose);
+}
+.rebut-col.after {
+  background: #eff7f1;
+  border-left: 3px solid var(--green);
+}
+.rebut-col h4 {
+  margin: 0 0 1.5mm 0;
+  font-size: 9.5pt;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.rebut-col h4 .tag {
+  font-family: var(--mono);
+  font-size: 7.5pt;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.rebut-col.feedback h4 { color: var(--orange); }
+.rebut-col.feedback h4 .tag { background: var(--orange-soft); color: var(--orange); }
+.rebut-col.before h4 { color: var(--rose); }
+.rebut-col.before h4 .tag { background: var(--rose-soft); color: var(--rose); }
+.rebut-col.after h4 { color: var(--green); }
+.rebut-col.after h4 .tag { background: var(--green-soft); color: var(--green); }
+.rebut-col .body {
+  font-family: var(--mono);
+  font-size: 7.5pt;
+  white-space: pre-wrap;
+  color: #2d3748;
+  line-height: 1.4;
+}
+.rebut-col .body .hit  { background: #d5f0df; padding: 0 2px; border-radius: 2px; color: #22543d; font-weight: 600; }
+.rebut-col .body .miss { text-decoration: line-through; color: #a0aec0; }
+.rebut-col .body .add  { background: #fef3c7; padding: 0 2px; border-radius: 2px; font-weight: 600; color: #744210; }
+
+/* ============ Takeaway row ============ */
+.takeaway-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4mm;
+}
+.take-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--gold);
+  border-radius: 8px;
+  padding: 3mm 5mm;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.take-card .num {
+  font-family: var(--mono);
+  font-size: 9pt;
+  color: var(--gold);
+  background: var(--gold-soft);
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.take-card h3 {
+  margin: 3mm 0 2mm 0;
+  font-size: 11pt;
+  color: var(--ink);
+}
+.take-card p {
+  margin: 0;
+  font-size: 9pt;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.take-card b { color: var(--gold); }
+
+.footer {
+  margin-top: 4mm;
+  padding-top: 2mm;
+  border-top: 1px dashed var(--line);
+  font-size: 8.5pt;
+  color: var(--ink-dim);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ============ utility ============ */
+.mono { font-family: var(--mono); }
+.sub  { color: var(--ink-soft); font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     PAGE 1 — 做什么 + 为什么有意义
+================================================================ -->
+<section class="page">
+
+  <div class="hero">
+    <h1>hep_COT</h1>
+    <div class="tagline">让大语言模型"读懂"一篇 HEP 实验论文 —— 把它压成一份结构化、可机读、可审计的分析报告</div>
+    <div class="example-strip">
+      全文贯穿同一个真实例子：CMS VBF heavy Majorana neutrino search · <b>arXiv 2206.08956</b> · 13 TeV · 138 fb⁻¹ · same-sign μμ
+    </div>
+  </div>
+
+  <h2 class="section">① 我们做了什么 <small>输入一篇论文 → 产出一份结构化分析</small></h2>
+
+  <div class="flow">
+    <div class="pill input">
+      <div class="label">Input</div>
+      <div class="title">一篇 HEP 实验论文</div>
+      <div class="note">arXiv tex 源码 · 图与 caption ·<br>HEPData 数据表 · INSPIRE 引用图</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="pill process">
+      <div class="label">Process</div>
+      <div class="title">六个物理问题，逐一作答</div>
+      <div class="note">每个维度独立调用 HEP 工具查论文、查图、查 HEPData，再按结构化 schema 提交答案</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="pill output">
+      <div class="label">Output</div>
+      <div class="title">可机读 JSON 报告</div>
+      <div class="note">每个字段必填、非空、带出处<br>+ 图表覆盖清单 + 审计轨迹</div>
+    </div>
+  </div>
+
+  <h2 class="section">② 六个物理问题 <small>每张卡片下方是 teacher 在 arXiv 2206.08956 上的真实输出（节选）</small></h2>
+
+  <div class="phase-grid">
+    <div class="phase-card">
+      <span class="idx">Phase 1</span><h3>测了什么</h3>
+      <div class="q">测量类型、终态、数据集、头条结果、图表家底、HEPData 可用性</div>
+      <div class="example">
+        <b>measurement_type</b>: 首次用 VBF 在 13 TeV 搜索重 Majorana ν 与 Weinberg operator 的同号双 μ 信号<br>
+        <b>final_state</b>: 2 same-sign μ + VBF 双前向 jet 拓扑 + 丢失横动量<br>
+        <b>key_result</b>: 观测 95% CL 上限，有效 μμ Majorana 质量 <b>10.8 GeV</b> (期望 12.8 GeV)
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <span class="idx">Phase 2</span><h3>为什么做</h3>
+      <div class="q">理论动机、已有约束、相对前人的进步、是在回答谁的预言</div>
+      <div class="example">
+        <b>theory_motivation</b>: 中微子振荡提示 BSM；Weinberg dim-5 算符可生成 Majorana ν 质量并引入 LNV<br>
+        <b>BSM_or_SM_goal</b>: BSM 搜索，type-I seesaw 下 m<sub>N</sub> 从 50 GeV 到 25 TeV<br>
+        <b>comparison</b>: 首次使用 VBF 通道，互补于过去 DY/W 联合产生的搜索
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <span class="idx">Phase 3</span><h3>怎么做</h3>
+      <div class="q">触发、对象定义、信号区、背景来源、估计方法、控制区</div>
+      <div class="example">
+        <b>signal_regions</b>: 按 m<sub>N</sub> 分三档，配不同判别变量<br>
+        <b>background</b>: WZ、ZZ→4ℓ、ttZ、非 prompt 轻子、电荷误识<br>
+        <b>control_regions</b>: 三个 CR 分别约束 WZ、ZZ、非 prompt
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <span class="idx">Phase 4</span><h3>误差多大</h3>
+      <div class="q">主导系统误差、实验 vs 理论、关联处理、对结果影响</div>
+      <div class="example">
+        <b>dominant</b>: 信号/背景模板的统计误差（Barlow-Beeston-lite）最大<br>
+        <b>experimental</b>: 亮度 1.2–2.5%、JES 2–5%、非 prompt 归一化 30%<br>
+        <b>theoretical</b>: 理论 scale ~6%、PDF ~1%；多年关联处理
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <span class="idx">Phase 5</span><h3>统计与结论</h3>
+      <div class="q">拟合框架、观测量、中心值、置信区间、SM 一致性 <span class="sub">· 此阶段强制补图表覆盖</span></div>
+      <div class="example">
+        <b>framework</b>: binned profile-likelihood + CL<sub>s</sub><br>
+        <b>observables</b>: 各 SR 用 p<sub>T</sub><sup>μ1</sup> 或 H<sub>T</sub><br>
+        <b>sm_consistency</b>: 观测与 SM 背景一致，无显著超额
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <span class="idx">Phase 6</span><h3>批判评估</h3>
+      <div class="q">优点、弱点、方法学启示、未来方向、可复现性</div>
+      <div class="example">
+        <b>strengths</b>: 首次 VBF 通道；m<sub>N</sub> ≳ 650 GeV 当时 LHC 最强<br>
+        <b>weaknesses</b>: 文中声称 HEPData 有记录但未检索到；仅 μμ<br>
+        <b>future</b>: 加 ee / eμ 通道 + Run 3 延伸至更高 m<sub>N</sub>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight-row">
+    <div class="insight">
+      <h3>HEP 物理意义</h3>
+      <div class="lead">把"读一篇 paper"这件事，变成可比较的结构化数据。</div>
+      <ul>
+        <li>一篇实验论文通读 + 做笔记 + 对 HEPData，博士生要 2–3 天；现在是一份六维 JSON，每个数值都带 §/Fig/Table 出处</li>
+        <li>下游：跨论文的系统误差对齐、限制对齐、方法学比较、自动化文献综述</li>
+        <li>为 HEP-ML、未来对撞机唯象提供结构化前置数据；也给学生一份"不会漏系统误差、不会只抄摘要"的分析模板</li>
+      </ul>
+    </div>
+    <div class="insight ai">
+      <h3>AI 方法论意义</h3>
+      <div class="lead">一个领域原生的推理评估 + 对齐基准。</div>
+      <ul>
+        <li>常见 LLM benchmark 靠"GPT-4 当裁判" —— 主观、贵、不可复现</li>
+        <li>这里用论文天然的结构约束当裁判信号：<b>数值对上</b> · <b>引用对上</b> · <b>必填填满</b></li>
+        <li>结果是<b>可审计、可复现、无 judge 漂移</b>的对齐信号；三路并行 (teacher / native / aligned) 同时度量<b>裸能力</b>与<b>带反馈时的可教性</b></li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ================================================================
+     PAGE 2 — 三路实验 + 反馈机制 + 真实反馈原文
+================================================================ -->
+<section class="page">
+
+  <div class="hero purple">
+    <h1>怎么测推理差距 & 怎么把弱模型对齐到强模型</h1>
+    <div class="tagline">关键点：反馈信号<b style="color:#ffd98a">不是</b>来自另一个 LLM，而是来自论文结构的规则化 diff</div>
+    <div class="example-strip">
+      一条真实的反馈循环：<b>motivation</b> 阶段，student 第 1 轮漏掉 5 个数字 + 6 个引用锚点 → 收反馈 → 第 3 轮全部补齐
+    </div>
+  </div>
+
+  <h2 class="section">③ 三路并行实验 <small>同一篇论文、同一套六维问题，只换"谁在读、带不带反馈"</small></h2>
+
+  <div class="three-col">
+    <div class="strand teacher">
+      <div class="role">Strand 1 · Reference</div>
+      <h3>Teacher</h3>
+      <div class="model">OpenAI · GPT-5.4 (o-series, high reasoning)</div>
+      <div class="purpose">
+        强推理模型独立走完六维分析。<br>
+        <b>作用</b>：给出参考答案。<b style="color:var(--ink)">不当裁判。</b>
+      </div>
+    </div>
+    <div class="strand native">
+      <div class="role">Strand 2 · Baseline</div>
+      <h3>Student — Native</h3>
+      <div class="model">DeepSeek V3.2-reasoner</div>
+      <div class="purpose">
+        弱推理模型独立作答，<b>不看 teacher 结果</b>。<br>
+        <b>作用</b>：度量模型的<b>裸能力基线</b>。
+      </div>
+    </div>
+    <div class="strand aligned">
+      <div class="role">Strand 3 · Aligned</div>
+      <h3>Student — Aligned</h3>
+      <div class="model">DeepSeek V3.2-reasoner + feedback loop</div>
+      <div class="purpose">
+        同一模型，每个维度最多 3 轮带反馈重试。<br>
+        <b>作用</b>：度量模型的<b>可教性 / 带反馈上限</b>。
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section">④ 反馈从哪来？ <small>— 不是另一个 LLM，是规则化 diff</small></h2>
+
+  <div class="signal-block">
+    <h3>三条确定性比对（无 LLM 参与）</h3>
+    <div class="subtitle">对 Student 每一轮的回答，跟 Teacher 参考做三项比对；任一不过则把"缺什么"拼成反馈文本回塞，再来一轮，最多 3 轮。</div>
+
+    <div class="signal-three">
+      <div class="rule">
+        <span class="tag">RULE 1 · L1 numbers</span>
+        <div class="name">关键数值是否对上</div>
+        <div class="desc">提取两边所有数字（含单位），按 5% 相对容差做集合匹配。</div>
+        <div class="thresh">阈值：命中率 ≥ 0.80</div>
+      </div>
+      <div class="rule">
+        <span class="tag">RULE 2 · L1 citations</span>
+        <div class="name">引用锚点是否对上</div>
+        <div class="desc">提取所有 §/Fig/Table/HEPData/arXiv 标签，做集合交集。</div>
+        <div class="thresh">阈值：命中率 ≥ 0.70</div>
+      </div>
+      <div class="rule">
+        <span class="tag">RULE 3 · L4 schema</span>
+        <div class="name">必填字段是否填满</div>
+        <div class="desc">每个维度预先声明必须非空的字段（且不能是 "[uncertain]"）。</div>
+        <div class="thresh">阈值：占比 ≥ 0.80</div>
+      </div>
+    </div>
+
+    <div class="example-block">
+      <div class="col">
+        <h4>motivation 阶段 Round 1 的 diff 判决 <span class="mini">· 来自 round5 实跑数据</span></h4>
+<div class="diff"><span class="key">L1 numbers</span> · 命中 0.375  → 未达 0.80
+  <span class="miss">missing: ["61","165","90%","79","180", (+3 more)]</span>
+<span class="key">L1 citations</span> · 命中 0.182  → 未达 0.70
+  <span class="miss">missing: ["arxiv:2009.06079","arxiv:2012.09882",
+           "fig:1","sec detector_and_simulation",
+           "sec intro_motivation","arxiv:1605.02889"]</span>
+<span class="key">L4 schema</span> · 6/6 字段非空 <span class="good">✓ pass</span>
+<span class="key">tool-path</span> · edit distance <b>7</b> to reference</div>
+      </div>
+      <div class="col">
+        <h4>塞回 student 下一轮 user prompt 的反馈文本 <span class="mini">· 自动生成，逐字</span></h4>
+<div class="fb-template"><span class="lbl">[请重做 Phase `motivation`。第 2 轮]</span>
+
+裁判给出的差异摘要：
+  Numbers present in the reference but missing
+    from your answer: <b>61, 165, 90%, 79, 180</b> (+3 more)
+  Citations missing: arxiv:2009.06079,
+    arxiv:2012.09882, fig:1,
+    sec detector_and_simulation,
+    sec intro_motivation arxiv:1605.02889
+  Tool-call path differs from reference (edit distance 7).
+
+修正建议：
+  · 请重新核对论文 / HEPData / 图表，
+    给出具体数字（含单位与来源）
+  · 每个数值都要引用到具体的 §/Fig/Table
+  · <b>不要盲目采纳假设的参考数值</b>
+    —— 通过工具亲自在论文中验证。</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ================================================================
+     PAGE 3 — 结果与启示（数据可视化 + 真实前后对比 + takeaway）
+================================================================ -->
+<section class="page">
+
+  <div class="hero gold">
+    <h1>结果：反馈循环真的在推学生变细致</h1>
+    <div class="tagline">六个维度，Native → Aligned 的命中率变化 —— <b style="color:#ffd98a">引用 6/6 上升，数值 5/6 上升，一个真实 trade-off</b></div>
+    <div class="example-strip">
+      <b>motivation</b>: 数值命中 0.38 → 0.75 (+0.37) · <b>syst</b>: 引用命中 0.33 → 1.00 (+0.67) · <b>stat_result</b>: 数值 0.17 → 0.75 (+0.58)
+    </div>
+  </div>
+
+  <h2 class="section">⑤ 数据全景 <small>— 每行一个 phase，条形从中轴发散，直接读 Δ</small></h2>
+
+  <div class="delta-card">
+    <h3>Native → Aligned 的命中率 Δ</h3>
+    <div class="sub">基线条宽 = Native 命中率的灰影；彩色条 = Δ。正向绿 / 蓝，负向品红。</div>
+
+    <div class="delta-legend">
+      <span><span class="sw n"></span>Δ 数值（绿，正）</span>
+      <span><span class="sw c"></span>Δ 引用（蓝，正）</span>
+      <span><span class="sw dn"></span>Δ 负向（品红）</span>
+      <span style="margin-left:auto; font-family: var(--mono);">坐标：Δ ∈ [−0.50, +0.70]，中轴 = 0</span>
+    </div>
+
+    <div class="delta-grid">
+      <div></div>
+      <div class="col-head">Δ 数值命中 · native → aligned</div>
+      <div class="col-head">Δ 引用命中 · native → aligned</div>
+
+      <div class="phase-label">1. overview<small>0.78 → 0.56 / 0.25 → 0.75</small></div>
+      <div class="dbar-wrap">
+        <div class="bar neg" style="width: 22%"></div>
+        <span class="label left">−0.22</span>
+        <span class="base-n">0.78→0.56</span>
+      </div>
+      <div class="dbar-wrap">
+        <div class="bar pos cite" style="width: 50%"></div>
+        <span class="label right">+0.50</span>
+        <span class="base-n">0.25→0.75</span>
+      </div>
+
+      <div class="phase-label">2. motivation<small>0.38 → 0.75 / 0.18 → 0.59</small></div>
+      <div class="dbar-wrap">
+        <div class="bar pos" style="width: 37%"></div>
+        <span class="label right">+0.37</span>
+        <span class="base-n">0.38→0.75</span>
+      </div>
+      <div class="dbar-wrap">
+        <div class="bar pos cite" style="width: 41%"></div>
+        <span class="label right">+0.41</span>
+        <span class="base-n">0.18→0.59</span>
+      </div>
+
+      <div class="phase-label">3. strategy<small>0.39 → 0.77 / 0.33 → 0.67</small></div>
+      <div class="dbar-wrap">
+        <div class="bar pos" style="width: 38%"></div>
+        <span class="label right">+0.38</span>
+        <span class="base-n">0.39→0.77</span>
+      </div>
+      <div class="dbar-wrap">
+        <div class="bar pos cite" style="width: 34%"></div>
+        <span class="label right">+0.34</span>
+        <span class="base-n">0.33→0.67</span>
+      </div>
+
+      <div class="phase-label">4. syst<small>0.41 → 0.68 / 0.33 → 1.00</small></div>
+      <div class="dbar-wrap">
+        <div class="bar pos" style="width: 27%"></div>
+        <span class="label right">+0.27</span>
+        <span class="base-n">0.41→0.68</span>
+      </div>
+      <div class="dbar-wrap">
+        <div class="bar pos cite" style="width: 50%"></div>
+        <span class="label right" style="font-weight:700;color:var(--blue)">+0.67</span>
+        <span class="base-n">0.33→1.00</span>
+      </div>
+
+      <div class="phase-label">5. stat_result<small>0.17 → 0.75 / 0.36 → 0.46</small></div>
+      <div class="dbar-wrap">
+        <div class="bar pos" style="width: 50%"></div>
+        <span class="label right" style="font-weight:700;color:var(--green)">+0.58</span>
+        <span class="base-n">0.17→0.75</span>
+      </div>
+      <div class="dbar-wrap">
+        <div class="bar pos cite" style="width: 10%"></div>
+        <span class="label right">+0.10</span>
+        <span class="base-n">0.36→0.46</span>
+      </div>
+
+      <div class="phase-label">6. assessment<small>0.00 → 0.57 / 0.57 → 0.86</small></div>
+      <div class="dbar-wrap">
+        <div class="bar pos" style="width: 50%"></div>
+        <span class="label right" style="font-weight:700;color:var(--green)">+0.57</span>
+        <span class="base-n">0.00→0.57</span>
+      </div>
+      <div class="dbar-wrap">
+        <div class="bar pos cite" style="width: 29%"></div>
+        <span class="label right">+0.29</span>
+        <span class="base-n">0.57→0.86</span>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section">⑥ 一个 phase 的"之前 / 反馈 / 之后" <small>— motivation 阶段 round1 答案 → 规则化 diff → round3 答案（真实节选）</small></h2>
+
+  <div class="rebut-card">
+    <div class="rebut-grid">
+      <div class="rebut-col before">
+        <h4>BEFORE · Round 1 学生答案 <span class="tag">motivation.short_answer</span></h4>
+<div class="body">本文首次利用 VBF 过程在 LHC 上搜索
+重 Majorana 中微子和 Weinberg operator，
+目标是在质量 m_N &gt; 650 GeV 时改善先前
+LHC 限制，并首次在 collider 上测试
+Weinberg operator。
+
+<span class="miss">(漏："type-I seesaw" 的明确定位)</span>
+<span class="miss">(漏：Majorana 质量头条数字 10.8 GeV)</span>
+<span class="miss">(漏：KamLAND-Zen / Agostini 等 0νββ 先前约束)</span></div>
+      </div>
+      <div class="rebut-col feedback">
+        <h4>FEEDBACK · 规则化 diff <span class="tag">auto-generated</span></h4>
+<div class="body">Missing numbers (reference ∖ student):
+  <b>61, 165, 90%, 79, 180</b>
+  (KamLAND-Zen / Agostini 给出的
+   |m_ee| 90% CL 上限 meV 量级数字)
+
+Missing citations:
+  <b>arxiv:2009.06079, arxiv:2012.09882,
+  sec detector_and_simulation,
+  sec intro_motivation arxiv:1605.02889</b>
+
+Tool-call path edit distance: 7
+  (student 没查 intro_motivation 的
+   prior-constraint 参考)
+
+→ 回塞 user prompt，下一轮重做</div>
+      </div>
+      <div class="rebut-col after">
+        <h4>AFTER · Round 3 学生答案 <span class="tag">same schema</span></h4>
+<div class="body">本文首次利用 VBF 过程搜索
+<span class="add">type-I seesaw 模型中</span>的 heavy Majorana
+neutrinos 和 Weinberg operator，在
+m_N &gt; 650 GeV 区域给出了迄今 LHC 最
+严格的 <span class="hit">|V_μN|²</span> 限制，并对 Weinberg
+operator 给出了<span class="add">首个对撞机上的有效
+μμ Majorana 质量上限 10.8 GeV</span>。
+
+<span class="add">prior_constraints</span>: KamLAND-Zen, Agostini
+et al., |m_ee| 90% CL 上限 <span class="hit">61–165 meV</span>
+和 <span class="hit">79–180 meV</span>；NA62 带电 kaon LNV
+衰变给 <span class="hit">55 GeV</span> 上限
+(<span class="hit">arxiv:1905.07770, § intro_motivation</span>)。</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section">⑦ 三条能带走的结论</h2>
+
+  <div class="takeaway-row">
+    <div class="take-card">
+      <span class="num">Takeaway 1</span>
+      <h3>"规则化 diff" 比 LLM judge 更有信息量</h3>
+      <p>反馈里<b>精确到数字和锚点</b>（"漏了 61 meV、缺 arxiv:2009.06079"），而不是"写得不够全面"。学生能准确回去查对应 section，这是 LLM judge 做不到的。</p>
+    </div>
+    <div class="take-card">
+      <span class="num">Takeaway 2</span>
+      <h3>反馈循环大多数情况都在推学生变细致</h3>
+      <p>12 个命中率指标里 <b>11 个上升</b>，其中 syst 的引用命中从 0.33 → 1.00、stat_result 的数值从 0.17 → 0.75。这说明 DeepSeek 的"带反馈时的可教性"比"裸能力"高出一大截。</p>
+    </div>
+    <div class="take-card">
+      <span class="num">Takeaway 3</span>
+      <h3>看得见的 trade-off 才是有价值的</h3>
+      <p>唯一下降的 <b>overview 数值命中</b> (0.78 → 0.56) 是真实 trade-off：学生为补回 "650 GeV / 23 TeV" 重写了答案、反而改掉了原本对的数字。LLM judge 会平均掉这个信号，规则化 diff 直接把它暴露出来。</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>hep_COT · round 5 · arXiv 2206.08956 · session id 1776523842 (aligned)</span>
+    <span>teacher = GPT-5.4 · student = DeepSeek V3.2 · diff = deterministic rule set</span>
+  </div>
+
+</section>
+
+</body></html>
