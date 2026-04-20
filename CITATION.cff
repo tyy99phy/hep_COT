@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software in academic work, please cite it as below."
+title: "hep_cot: HEP paper literature reasoning copilot with comparative CoT study"
+abstract: >-
+  A tool-using LLM agent for reading HEP experimental papers (arXiv LaTeX
+  source, figures, HEPData, INSPIRE reference graph) and a comparative
+  reasoning-study harness that benchmarks teacher/student model pairs on
+  structured paper-analysis tasks with autoloop refinement.
+type: software
+authors:
+  - family-names: tyyang
+    email: tyy99phy@gmail.com
+repository-code: "https://github.com/tyy99phy/hep_COT"
+license: MIT
+version: "0.2.0"
+keywords:
+  - high-energy-physics
+  - large-language-models
+  - chain-of-thought
+  - scientific-reasoning
+  - arxiv
+  - hepdata
+  - inspire-hep
+  - agent
+  - tool-use

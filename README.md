@@ -1,113 +1,153 @@
-# hep-copilot
+# hep_cot
 
-**HEP Paper Literature Reasoning Copilot + Comparative CoT Study**
+**HEP paper literature reasoning copilot + comparative CoT study harness**
 
 A tool-using LLM agent that reads HEP experimental papers (arXiv LaTeX
 source + figures + HEPData + INSPIRE reference graph) and answers
 targeted questions about systematics, statistical methods, limits, and
 analysis strategy with verifiable citations.
 
-Also ships a **comparative reasoning study** harness: run a paper QA
-set through a *teacher* (GPT-5.4, reasoning summaries) and a *student*
-(DeepSeek-reasoner V3.2, raw CoT), then use structured answers to
-measure the reasoning gap, with optional autoloop refinement of the
-student until the hard correctness (L1) criterion is met.
+Also ships a **protocol-driven comparative reasoning study** harness: run
+a paper through a *teacher* (e.g. GPT with reasoning summaries) and a
+*student* (e.g. DeepSeek-reasoner with raw CoT) across six predefined
+analysis phases, then measure the reasoning gap, with optional autoloop
+refinement of the student until a per-phase hard-correctness (L1)
+criterion is met.
+
+---
+
+## Prerequisites
+
+- Python **3.10+**
+- Outbound HTTPS to `arxiv.org`, `inspirehep.net`, and `www.hepdata.net`
+  (only needed once per paper — results are cached under `paper_cache/`).
+- At least one LLM provider API key:
+  - `OPENAI_API_KEY` for the OpenAI Responses backend (teacher / default
+    copilot).
+  - `DEEPSEEK_API_KEY` for DeepSeek-reasoner (student).
 
 ## Install
 
 ```bash
+git clone https://github.com/tyy99phy/hep_COT.git
+cd hep_COT
 pip install -e .
-# requires openai>=1.50 and httpx>=0.27; pyyaml for HEPData parsing
+# optional: PDF export for the `export` subcommand
+pip install -e ".[pdf]"
 ```
 
-Set provider API keys:
+Copy the example env file and fill in your keys:
 
 ```bash
-export OPENAI_API_KEY=sk-...
-export DEEPSEEK_API_KEY=sk-...
-# optional:
-export OPENAI_BASE_URL=https://...      # for proxies
-export DEEPSEEK_BASE_URL=https://...    # override default https://api.deepseek.com
+cp .env.example .env
+$EDITOR .env
+# then either `source .env` or use direnv / python-dotenv
 ```
+
+## Bootstrap demo fixtures
+
+Downloads the default demo paper's LaTeX source into `paper_cache/` so
+that the Quick start examples have something to read and the offline
+unit tests can run end-to-end:
+
+```bash
+python scripts/bootstrap_fixtures.py            # arXiv:2206.08956
+python scripts/bootstrap_fixtures.py 1811.10461 # any other arXiv id
+```
+
+Re-running is a no-op once the source is cached.
 
 ## Quick start — interactive copilot
 
 ```bash
-hep-copilot paper 2206.08956 --provider openai
+hep-cot paper 2206.08956 --provider openai
 # or
-hep-copilot paper 2206.08956 --provider deepseek
+hep-cot paper 2206.08956 --provider deepseek
 ```
 
 ```
 You > What are the top-3 dominant systematic uncertainties?
-[thinking] need to locate the systematics section and a breakdown table...
-[tool] get_paper_section(section_pattern="Systematic")
-[tool] fetch_hepdata(arxiv_id="2206.08956")
-[tool] get_hepdata_table(arxiv_id="2206.08956", table_name="Systematic breakdown")
-[answer] The three dominant systematics are (1) JES at 3.2% [§6.2, HEPData/Tbl 5] ...
+[thinking]   need to locate the systematics section and a breakdown table...
+[tool]       get_paper_section(section_pattern="Systematic")
+[tool]       fetch_hepdata(arxiv_id="2206.08956")
+[tool]       get_hepdata_table(arxiv_id="2206.08956", table_name="Systematic breakdown")
+[answer]     The three dominant systematics are (1) JES at 3.2% [§6.2, HEPData/Tbl 5] ...
 ```
 
-Type `/tools` to list available tools, `/paper <id>` to switch paper,
-`/provider <name>` to switch backend mid-session, `/save` to persist.
+REPL commands: `/tools` lists available tools, `/paper <id>` switches
+paper, `/provider <name>` switches backend, `/save` persists the
+session.
 
 ## One-shot ask
 
 ```bash
-hep-copilot ask 2206.08956 "What statistical framework does the paper use?"
+hep-cot ask 2206.08956 "What statistical framework does the paper use?"
 ```
 
-## Comparative study
+## Comparative study (teacher vs student, six analysis phases)
 
 ```bash
-hep-copilot study 2206.08956 \
-  --questions study_inputs/qa_seed_syst_stat_limit.json \
+hep-cot study 2206.08956 \
   --teacher openai \
   --student deepseek \
-  --autoloop --max-rounds 5 \
+  --autoloop \
+  --max-rounds-per-phase 3 \
   --output-dir ./study_sessions
 ```
 
-Output:
+Output layout:
+
 ```
-study_sessions/teacher_openai_2206.08956_<ts>.jsonl
-study_sessions/student_native_deepseek_2206.08956_<ts>.jsonl
-study_sessions/student_aligned_deepseek_2206.08956_<ts>.jsonl
-study_sessions/metrics_2206.08956_<ts>.json
+study_sessions/teacher_<id>_<ts>/           # teacher per-phase JSONs
+study_sessions/student_native_<id>_<ts>/    # student first-pass JSONs
+study_sessions/student_aligned_<id>_<ts>/   # autoloop-refined JSONs (if --autoloop)
+study_sessions/metrics_<id>_<ts>.json       # aggregated pass-rate metrics
 ```
 
-The `metrics_*.json` aggregates per-question and per-category:
-  * Native L1 pass rate (student's first unassisted answer)
-  * Aligned convergence rate (student after ≤ N feedback rounds)
-  * Tool-call sequence edit distance (teacher vs student)
-  * Number / citation hit rates
+`metrics_*.json` aggregates per-phase and overall:
+
+- **Native L1 pass rate** — student's first unassisted answer vs teacher gold.
+- **Aligned convergence rate** — student pass rate after ≤ N feedback rounds.
+- **Tool-call sequence edit distance** — teacher vs student tool-use trajectory.
+- **Number / citation hit rates** — derived from the structured-answer schema.
+- **Figure coverage** — fraction of paper figures referenced at least once.
+
+Re-render a previously completed run into `ANALYSIS.md` / `ANALYSIS.pdf`
+without re-calling any LLM:
+
+```bash
+hep-cot export ./study_sessions/teacher_<id>_<ts>
+hep-cot export ./study_sessions                       # bulk re-export
+```
 
 ## Architecture
 
 ```
-hep_cot/
+src/hep_cot/
 ├── llm/                   # Provider abstraction (OpenAI Responses + DeepSeek-reasoner)
 ├── agent/                 # Model ↔ tool loop + state + tool registry
-├── tools/                 # HEP tools: paper / figures / INSPIRE / HEPData / arxiv
-├── session/               # Interactive REPL + persistence bridge
+├── tools/                 # HEP tools: paper / figures / INSPIRE / HEPData / arXiv
+├── session/               # Interactive REPL + persistence + MD/PDF export
 ├── prompts/               # Copilot / teacher / student system prompts
-├── study/                 # Comparative study: teacher / student / autoloop / judge / metrics
-├── paper_fetcher.py       # (existing) arXiv/INSPIRE → tex
-├── tex_extractor.py       # (existing) LaTeX source → clean tex
-├── figure_extractor.py    # (existing) LaTeX figures → PNG + captions
-├── cot_store.py           # (existing) session persistence
-└── cli.py                 # hep-copilot / hep-cot entry
+├── study/                 # Protocol phases, teacher, student, autoloop, judge, metrics
+├── paper_fetcher.py       # arXiv / INSPIRE → LaTeX source + metadata
+├── tex_extractor.py       # LaTeX source → clean text
+├── figure_extractor.py    # LaTeX figures → PNG + captions
+├── cot_store.py           # session persistence
+└── cli.py                 # `hep-cot` / `hep-copilot` entry
 ```
 
-Provider emits a unified event stream:
+Each provider emits a unified event stream:
 
 ```
-ThinkingDelta  (reasoning, raw for DeepSeek / summary for GPT-5.4)
-TextDelta      (final answer tokens)
+ThinkingDelta  (reasoning — raw for DeepSeek, summary for OpenAI)
+TextDelta      (final-answer tokens)
 ToolCall       (function-call request)
 TurnEnd        (stop reason + usage)
 ```
 
-The agent loop runs model → tool-execute → model until `stop_reason == "stop"`.
+The agent loop runs `model → execute-tool → model` until
+`stop_reason == "stop"`.
 
 ## Tools (MVP-1)
 
@@ -117,7 +157,7 @@ The agent loop runs model → tool-execute → model until `stop_reason == "stop
 | `get_paper_info`     | local cache          |
 | `get_paper_section`  | local tex            |
 | `search_text`        | local tex (regex)    |
-| `get_bibliography`   | local .bbl           |
+| `get_bibliography`   | local `.bbl`         |
 | `list_figures`       | LaTeX figures        |
 | `get_figure`         | LaTeX + PNG          |
 | `inspire_references` | INSPIRE-HEP API      |
@@ -126,18 +166,19 @@ The agent loop runs model → tool-execute → model until `stop_reason == "stop
 | `fetch_hepdata`      | HEPData API          |
 | `get_hepdata_table`  | HEPData API          |
 
-All external API calls are file-cached under `--cache-dir`.
+All external API calls are file-cached under `--cache-dir` (default
+`./paper_cache`).
 
 ## Legacy Codex mode
 
 The original Codex App-Server paper-analysis flow is preserved under
-`legacy-*` subcommands:
+`legacy-*` subcommands for reproducibility of earlier experiments:
 
 ```bash
-hep-copilot legacy-chat
-hep-copilot legacy-paper 2206.08956
-hep-copilot legacy-batch tasks.json
-hep-copilot legacy-export session.json -o session.md
+hep-cot legacy-chat
+hep-cot legacy-paper 2206.08956
+hep-cot legacy-batch tasks.json
+hep-cot legacy-export session.json -o session.md
 ```
 
 ## Testing
@@ -147,13 +188,16 @@ pytest tests/
 ```
 
 Offline smoke tests cover the agent loop, tool registry, judge, and
-paper_tools against the cached `2206.08956` fixture.
+paper tools. The paper-tool test auto-skips if the demo fixture is
+absent — run `python scripts/bootstrap_fixtures.py` once first to
+enable it.
 
-## Roadmap
+## Citing
 
-- M2: L3 CoT embedding similarity in judge; HEP reinterpretation workflow
-- M3: multi-paper cross-referencing; evaluation benchmark publication
+A [`CITATION.cff`](./CITATION.cff) is provided for GitHub's "Cite this
+repository" button. BibTeX / plain-text exports are available from the
+same menu.
 
-## License / credits
+## License
 
-See repository root.
+[MIT](./LICENSE) — see `LICENSE` for full text.
