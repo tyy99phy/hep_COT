@@ -122,6 +122,9 @@ hep-cot export ./study_sessions                       # bulk re-export
 
 ## Architecture
 
+See [docs/pipeline_overview.pdf](./docs/pipeline_overview.pdf) for the
+full pipeline diagram.
+
 ```
 src/hep_cot/
 ├── llm/                   # Provider abstraction (OpenAI Responses + DeepSeek-reasoner)
